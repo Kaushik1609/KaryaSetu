@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KaryaSetu — Forecast Reliability | Smart India Hackathon 2026</title>
+  <meta name="description" content="KaryaSetu adds a forecast reliability layer to existing NWP forecasts over India using WeatherBench 2 HRES native grid predictions.">
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Leaflet JS & Chart.js -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ================= TOP HEADER ================= -->
+  <header class="app-header">
+    <div class="header-inner">
+      
+      <!-- Left: KaryaSetu Branding -->
+      <div class="brand-left">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14"/>
+            <circle cx="12" cy="12" r="4" fill="#0B192C"/>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <span class="brand-name">KaryaSetu</span>
+          <span class="brand-sub">Forecast Reliability</span>
+        </div>
+      </div>
+
+      <!-- Center Title & Nav -->
+      <div class="header-center">
+        <h2>KaryaSetu: Forecast Reliability</h2>
+        <nav class="top-nav">
+          <a href="#" class="nav-item active" id="navDashboard">Dashboard</a>
+          <a href="#" class="nav-item" id="navRiskMap">Risk Map</a>
+          <a href="#" class="nav-item" id="navTimeSeries">Time Series</a>
+          <a href="#" class="nav-item" id="navExplainability">Explainability</a>
+        </nav>
+      </div>
+
+      <!-- Right: SIH 2026 Tag -->
+      <div class="header-right">
+        <div class="sih-badge">
+          <span class="dot-orange"></span>
+          <span>Smart India Hackathon 2026</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= MAIN LAYOUT (TWO COLUMNS) ================= -->
+  <main class="main-container">
+    
+    <!-- LEFT COLUMN: MAIN MAP (55-60% WIDTH) -->
+    <section class="left-column">
+      <div class="map-card">
+        
+        <!-- Map Floating Controls -->
+        <div class="map-floating-controls">
+          <div class="control-pill-group">
+            <button class="map-ctrl-btn active" id="btnModeConfidence">Confidence</button>
+            <button class="map-ctrl-btn" id="btnModeBustProb">Bust Probability</button>
+            <button class="map-ctrl-btn active" id="btnToggleWind">Wind</button>
+            <button class="map-ctrl-btn active" id="btnToggleGrid">Grid</button>
+            <button class="map-ctrl-btn" id="btnResetMap">Reset</button>
+          </div>
+        </div>
+
+        <!-- Leaflet Satellite/Terrain Map Canvas -->
+        <div id="map">
+          <!-- Wind Particle Overlay Canvas -->
+          <canvas id="windCanvas"></canvas>
+        </div>
+
+        <!-- Map Bottom Legend -->
+        <div class="map-legend">
+          <div class="legend-title">Forecast Confidence</div>
+          <div class="legend-items">
+            <span class="legend-item"><span class="legend-dot green"></span> High</span>
+            <span class="legend-item"><span class="legend-dot yellow"></span> Moderate</span>
+            <span class="legend-item"><span class="legend-dot red"></span> Low</span>
+          </div>
+          <div class="legend-subtext">Predictions shown on native model grid</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: CONTROL & METRICS PANEL (40-45% WIDTH) -->
+    <section class="right-column">
+
+      <!-- USER CONTROLS BAR -->
+      <div class="panel-card user-controls-card">
+        <div class="control-field">
+          <label for="selectRegion">Region</label>
+          <select id="selectRegion" class="form-select">
+            <option value="Maharashtra" selected>Maharashtra</option>
+            <option value="Gujarat">Gujarat</option>
+            <option value="Kerala">Kerala</option>
+            <option value="Karnataka">Karnataka</option>
+            <option value="Tamil Nadu">Tamil Nadu</option>
+            <option value="West Bengal">West Bengal</option>
+            <option value="Odisha">Odisha</option>
+            <option value="Assam">Assam</option>
+            <option value="Meghalaya">Meghalaya</option>
+            <option value="Rajasthan">Rajasthan</option>
+            <option value="Madhya Pradesh">Madhya Pradesh</option>
+            <option value="Uttar Pradesh">Uttar Pradesh</option>
+            <option value="Bihar">Bihar</option>
+            <option value="Jammu & Kashmir">Jammu & Kashmir</option>
+            <option value="Himachal Pradesh">Himachal Pradesh</option>
+            <option value="Uttarakhand">Uttarakhand</option>
+            <option value="Punjab">Punjab</option>
+            <option value="Haryana">Haryana</option>
+            <option value="Telangana">Telangana</option>
+            <option value="Andhra Pradesh">Andhra Pradesh</option>
+            <option value="Chhattisgarh">Chhattisgarh</option>
+            <option value="Jharkhand">Jharkhand</option>
+            <option value="Goa">Goa</option>
+            <option value="Sikkim">Sikkim</option>
+            <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+            <option value="Nagaland">Nagaland</option>
+            <option value="Manipur">Manipur</option>
+            <option value="Mizoram">Mizoram</option>
+            <option value="Tripura">Tripura</option>
+          </select>
+        </div>
+
+        <div class="control-field">
+          <label for="selectLeadTime">Lead Time</label>
+          <select id="selectLeadTime" class="form-select">
+            <option value="1">Day 1 / 24h</option>
+            <option value="2">Day 2 / 48h</option>
+            <option value="3">Day 3 / 72h</option>
+            <option value="4">Day 4 / 96h</option>
+            <option value="5" selected>Day 5 / 120h</option>
+            <option value="6">Day 6 / 144h</option>
+            <option value="7">Day 7 / 168h</option>
+            <option value="8">Day 8 / 192h</option>
+            <option value="9">Day 9 / 216h</option>
+            <option value="10">Day 10 / 240h</option>
+          </select>
+        </div>
+
+        <div class="control-field">
+          <label for="inputDate">Date</label>
+          <input type="date" id="inputDate" class="form-input" value="2026-09-28">
+        </div>
+      </div>
+
+      <!-- FORECAST RELIABILITY TOP KPI CARD -->
+      <div class="panel-card kpi-panel">
+        <div class="kpi-panel-header">
+          <div>
+            <span class="section-eyebrow">FORECAST RELIABILITY</span>
+            <h3 class="region-heading" id="lblSelectedRegion">Selected region: Maharashtra</h3>
+          </div>
+          <div class="lead-badge" id="lblLeadBadge">Day 5 / 120h</div>
+        </div>
+
+        <!-- TWO LARGE NUMERIC VALUES -->
+        <div class="kpi-values-grid">
+          <div class="kpi-box">
+            <span class="kpi-label">FORECAST CONFIDENCE</span>
+            <div class="kpi-num green-text" id="valConfidence">72%</div>
+          </div>
+
+          <div class="kpi-box">
+            <span class="kpi-label">BUST PROBABILITY</span>
+            <div class="kpi-num yellow-text" id="valBustProb">28%</div>
+          </div>
+        </div>
+
+        <div class="risk-indicator-row">
+          <span class="risk-title">Risk Level:</span>
+          <span class="risk-badge badge-moderate" id="lblRiskCategory">MODERATE</span>
+        </div>
+      </div>
+
+      <!-- FORECAST DETAILS CARD -->
+      <div class="panel-card details-card">
+        <div class="card-title">Forecast Details</div>
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="det-label">Precipitation</span>
+            <span class="det-val" id="detPrecip">18.4 mm</span>
+          </div>
+          <div class="detail-item">
+            <span class="det-label">2m Temperature</span>
+            <span class="det-val" id="detTemp">27.6 °C</span>
+          </div>
+          <div class="detail-item">
+            <span class="det-label">MSL Pressure</span>
+            <span class="det-val" id="detPress">1008 hPa</span>
+          </div>
+          <div class="detail-item">
+            <span class="det-label">850-hPa Humidity</span>
+            <span class="det-val" id="detHumidity">78%</span>
+          </div>
+          <div class="detail-item full-width">
+            <span class="det-label">500-hPa Vertical Velocity</span>
+            <span class="det-val" id="detVelocity">0.04 Pa/s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIME SERIES CARD -->
+      <div class="panel-card time-series-card">
+        <div class="card-header-flex">
+          <div class="card-title">Reliability Trend</div>
+          <button class="btn-text-action" id="btnFullTimeSeries">View Full Time Series</button>
+        </div>
+        
+        <!-- Small Line Chart Canvas -->
+        <div class="chart-container">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- SHAP EXPLAINABILITY CARD -->
+      <div class="panel-card shap-card" id="shapPanel">
+        <div class="card-header-flex">
+          <div class="card-title">Why this prediction?</div>
+          <button class="btn-text-action" id="btnFullExplanation">View Full Explanation</button>
+        </div>
+
+        <div class="shap-subtitle">Model Feature Contribution</div>
+
+        <!-- TOP 4 SHAP BARS CONTAINER -->
+        <div class="shap-bars-list" id="shapBarsList">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <div class="shap-disclaimer">
+          SHAP shows how input features contributed to this model prediction; it does not imply physical causation.
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ================= BOTTOM STATUS BAR ================= -->
+  <footer class="bottom-status-bar">
+    <div class="status-indicators">
+      <span class="status-item"><span class="legend-dot green"></span> High Confidence</span>
+      <span class="status-item"><span class="legend-dot yellow"></span> Moderate Confidence</span>
+      <span class="status-item"><span class="legend-dot red"></span> High Bust Risk</span>
+    </div>
+    <div class="status-tagline">
+      KaryaSetu adds a forecast reliability layer to existing NWP forecasts.
+    </div>
+  </footer>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Full Explanation & Telemetry Modal -->
+  <div class="modal-overlay" id="modalExplanation">
+    <div class="modal-box large-modal">
+      <div class="modal-header">
+        <h3>Full SHAP Model Feature Contribution & Telemetry</h3>
+        <button class="btn-close-modal" id="btnCloseExplanation">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">
+          Evaluated on WeatherBench 2 ECMWF HRES ~5.625° coarse grid with tuned XGBoost and Platt Calibrated Probabilities ($1 - P(\text{BUST})$).
+        </p>
+
+        <div class="telemetry-grid">
+          <div class="telem-box">
+            <span class="telem-val">0.868</span>
+            <span class="telem-lbl">ROC-AUC Score</span>
+          </div>
+          <div class="telem-box">
+            <span class="telem-val">0.0466</span>
+            <span class="telem-lbl">Brier Loss</span>
+          </div>
+          <div class="telem-box">
+            <span class="telem-val">0.392</span>
+            <span class="telem-lbl">PR-AUC</span>
+          </div>
+          <div class="telem-box">
+            <span class="telem-val">P90 June-July</span>
+            <span class="telem-lbl">Error Baseline</span>
+          </div>
+        </div>
+
+        <h4 class="modal-subheading">Complete Feature Breakdown for <span id="modalRegionName">Maharashtra</span> (Day <span id="modalLeadDay">5</span>)</h4>
+        <div class="modal-shap-container" id="modalShapContainer">
+          <!-- Rendered by JS -->
+        </div>
+
+        <div class="modal-footer-btn-row">
+          <button class="btn-secondary" id="btnCloseExplanationFooter">Close Panel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full Time Series Modal -->
+  <div class="modal-overlay" id="modalTimeSeries">
+    <div class="modal-box medium-modal">
+      <div class="modal-header">
+        <h3>10-Day Forecast Reliability Horizon</h3>
+        <button class="btn-close-modal" id="btnCloseTimeSeries">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">
+          Evolution of Forecast Confidence vs. Bust Probability across 24h to 240h lead time windows.
+        </p>
+        <div class="modal-chart-container">
+          <canvas id="modalTrendChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="state_paths.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
